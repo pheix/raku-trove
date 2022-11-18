@@ -1,0 +1,12 @@
+image: rakudo-star:latest
+
+before_script:
+  - raku --version
+  - zef update
+  - zef --debug --depsonly install git://github.com/ugexe/zef.git
+test:
+  script:
+    - prove6 -Ilib ./t/
+    - zef --verbose install .
+  only:
+    - main

@@ -1,0 +1,6 @@
+*.raku gitlab-language=perl
+*.rakumod gitlab-language=perl
+*.rakutest gitlab-language=perl
+*.pl6 gitlab-language=perl
+*.pm6 gitlab-language=perl
+*.p6 gitlab-language=perl
