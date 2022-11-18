@@ -1,0 +1,15 @@
+{
+    "perl"        : "6.d",
+    "name"        : "Trove",
+    "authors"     : [ "Konstantin Narkhov" ],
+    "version"     : "0.0.2",
+    "description" : "Yet another test harness",
+    "depends"     : [],
+    "license"     : "Artistic-2.0",
+    "provides"    : {
+        "Trove" : "lib/Trove.rakumod"
+    },
+    "tags"        : [ "TROVE", "TEST", "HARNESS" ],
+    "source-url"  : "https://gitlab.com/pheix/raku-trove.git",
+    "auth"        : "zef:knarkhov"
+}

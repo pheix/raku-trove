@@ -2,7 +2,7 @@
 
 ## Overview
 
-Yet another test harness written in Raku language and inspired by `bash`-driven test suite built-in to [Pheix](https://gitlab.com/pheix-pool/core-perl6).
+Yet another test harness written in Raku language and inspired by `bash` driven test suite built into [Pheix](https://gitlab.com/pheix-pool/core-perl6) content management system.
 
 ## License information
 
