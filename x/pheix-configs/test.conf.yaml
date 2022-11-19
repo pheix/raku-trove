@@ -1,0 +1,68 @@
+target: Pheix test suite
+stages:
+  - test: 'raku $WWW/user.raku --mode=test'
+    args:
+      - WWW
+  - test: ./t/cgi/cgi_post_test.sh
+    substages:
+      - test: raku ./t/00-november.t
+  - test: 'raku ./t/01-json.t $SCHASH'
+    args:
+      - SCHASH
+  - test: raku ./t/02-access-filechain.t
+  - test: raku ./t/03-access-unified.t
+  - test: raku ./t/04-blockchain-common.t
+  - test: raku ./t/05-blockchain-heavy.t
+  - test: raku ./t/06-blockchain-comp.t
+  - test: raku ./t/07-blockchain-write.t
+  - test: raku ./t/08-datepack.t
+  - test: raku ./t/09-debug.t
+  - test: raku ./t/10-headers.t
+  - test: 'raku ./t/11-version.t $GITVER $CURRVER'
+    args:
+      - GITVER
+      - CURRVER
+  - test: raku ./t/12-utils.t
+  - test: raku ./t/13-template.t
+  - test: raku ./t/14-stats.t
+  - test: raku ./t/15-resources-en.t
+  - test: raku ./t/16-markup.t
+  - test: raku ./t/17-headers-proto-sn.t
+    environment:
+      - 'export SERVER_NAME=https://foo.bar'
+    cleanup:
+      - unset SERVER_NAME
+    substages:
+      - test: raku ./t/17-headers-proto-sn.t
+        environment:
+          - 'export SERVER_NAME=https://foo.bar/'
+        cleanup:
+          - unset SERVER_NAME
+      - test: raku ./t/17-headers-proto-sn.t
+        environment:
+          - export SERVER_NAME=//foo.bar/
+        cleanup:
+          - unset SERVER_NAME
+  - test: raku ./t/18-headers-proto.t
+    substages:
+      - test: raku ./t/18-headers-proto.t
+        environment:
+          - export HTTP_REFERER=//foo.bar
+        cleanup:
+          - unset HTTP_REFERER
+      - test: raku ./t/18-headers-proto.t
+        environment:
+          - 'export HTTP_REFERER=https://foo.bar'
+        cleanup:
+          - unset HTTP_REFERER
+  - test: raku ./t/19-cookie.t
+  - test: raku ./t/20-pages.t
+  - test: raku ./t/21-controller-basic.t
+  - test: raku ./t/22-controller-api.t
+  - test: raku ./t/23-app.t
+  - test: raku ./t/24-route.t
+  - test: raku ./t/25-compression.t
+  - test: raku ./t/26-addons-embeddeduser.t
+  - test: raku ./t/27-addons-embeddedadm.t
+  - test: raku ./t/28-naive-signer.t
+  - test: raku ./t/29-deploy-smart-contract.t
