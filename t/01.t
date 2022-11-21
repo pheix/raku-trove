@@ -7,4 +7,6 @@ plan 1;
 
 use-ok 'Trove', 'Trove is used ok';
 
+diag(Trove.new.debug);
+
 done-testing;
