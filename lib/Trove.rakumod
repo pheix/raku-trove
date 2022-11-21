@@ -12,9 +12,9 @@ has      @.coveragestats;
 
 has Bool $.colorize      is default(False);
 has Bool $.logfirststage is default(False);
-has Num  @.coverage      is default(0);
-has Num  @.iterator      is default(0);
-has Num  @.linesz        is default(64);
+has Rat  $.coverage      is default(0.0);
+has Int  $.iterator      is default(0);
+has Int  $.linesz        is default(64);
 has Str  $.processor     is default('jq');
 has Str  $.files_report  is default('[]');
 has Str  $.www           is default('./www');
@@ -33,16 +33,9 @@ has Str  $.testlog        = sprintf("./testreport.%s.log", $!date);
 has Str  $.multipartdelim = sprintf("-----%s", Digest::MD5.new.md5_hex($!date));
 
 method debug returns Str {
-    $!date.say;
-    $!successtoken.say;
-
-    $!configfile.say;
-    $!processor.say;
-    $!currver.say;
-    $!gitver.say;
-    $!colorize.say;
-    $!logfirststage.say;
-    @!skippedstages.say;
+    for self.^attributes -> $attr {
+        sprintf("%15s: %s", $attr.name, ($attr.get_value(self).gist)).say;
+    }
 
     return self.^name;
 }
