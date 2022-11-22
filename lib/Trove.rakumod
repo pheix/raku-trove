@@ -2,7 +2,6 @@ unit class Trove;
 
 use Digest::MD5;
 
-
 has Str  $.configfile;
 has Str  $.gitver;
 has Str  $.currver;
@@ -32,10 +31,44 @@ has Str  $.gitbranch      = %*ENV<CI_COMMIT_BRANCH> // q{};
 has Str  $.testlog        = sprintf("./testreport.%s.log", $!date);
 has Str  $.multipartdelim = sprintf("-----%s", Digest::MD5.new.md5_hex($!date));
 
+enum EnvMode <set unset>;
+
 method debug returns Str {
     for self.^attributes -> $attr {
         sprintf("%15s: %s", $attr.name, ($attr.get_value(self).gist)).say;
     }
 
     return self.^name;
+}
+
+method process returns Bool {
+    return True;
+}
+
+method check_output(Str :$output!, Int :$stage!) returns Bool {
+    return True;
+}
+
+method stage_is_skipped(Int :$stage!, Str :$script!) returns Bool {
+    return True;
+}
+
+method stage_env (EnvMode :$mode = (set), Int :$stage!, Int :$substage) {
+    return True;
+}
+
+method get_stage_command(Int :$stage!, Int :$substage) returns Str {
+    return Str;
+}
+
+method process_substages(Int :$stage!, Int :$substage) returns Bool {
+    return True;
+}
+
+method failure_exit(Int :$stage!) returns Bool {
+    return False;
+}
+
+method multipart_data(Str :$data!) returns Str {
+    return Str;
 }
