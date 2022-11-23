@@ -8,6 +8,6 @@ test:
   script:
     - prove6 -Ilib ./t/
     - zef --verbose install .
-    - trove-cli -c -l --s='1,2,3,4,5,6,7,90' --f=`pwd`/x/run-tests.conf.json --v='0.0.1' --g=`pwd` -p=yq
+    - trove-cli -c -l --s='1,2,3,4,5,6,7,90' --f=`pwd`/x/pheix-configs/test.conf.yaml --v='0.0.1' --g=`pwd` -p=yq
   only:
     - main

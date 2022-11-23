@@ -44,5 +44,5 @@ sub MAIN (
 
     my $trove = Trove.new(|%inits);
 
-    $trove.debug;
+    $trove.process;
 }
