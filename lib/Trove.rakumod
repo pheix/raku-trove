@@ -93,10 +93,23 @@ method process(Bool :$exit = True) returns Bool {
             self.debugmsg(:m(sprintf("[ %s ]", colored('SKIP', 'red'))));
         }
         else {
-            self.debugmsg(:m(sprintf("%02d. %-" ~ $!linesz ~ "s[ %s ]",
-                $stageindex,
-                    sprintf("Testing %s", colored($script, 'yellow')),
-                            colored('OK', 'green'))));
+            my @run  = $command.split(/\s+/, :skip-empty);
+
+            my $proc = run @run, :out;
+            my $out  = $proc.out.slurp: :close;
+
+            if $out {
+                $out.say;
+
+                my $res = colored('OK', 'green');
+
+                $res = colored('SKIP', 'red') if $out ~~ m:i/'# skip'/;
+                $res = colored('FAIL', 'red') if $out ~~ /'not ok'/;
+
+                self.debugmsg(:m(sprintf("%02d. %-" ~ $!linesz ~ "s[ %s ]",
+                    $stageindex,
+                        sprintf("Testing %s", colored($script, 'yellow')), $res)));
+            }
         }
     }
 
