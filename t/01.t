@@ -12,7 +12,7 @@ my $trove = Trove.new;
 ok $trove, 'Trove object';
 
 $trove.debug;
-$trove.failure_exit(:stage(1), :exit(False));
+$trove.failure_exit(:stageindex(1), :exit(False));
 
 subtest {
     plan 4;

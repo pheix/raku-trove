@@ -98,25 +98,35 @@ method process(Bool :$exit = True) returns Bool {
             my $proc = run @run, :out;
             my $out  = $proc.out.slurp: :close;
 
-            if $out {
-                $out.say;
-
-                my $res = colored('OK', 'green');
-
-                $res = colored('SKIP', 'red') if $out ~~ m:i/'# skip'/;
-                $res = colored('FAIL', 'red') if $out ~~ /'not ok'/;
-
-                self.debugmsg(:m(sprintf("%02d. %-" ~ $!linesz ~ "s[ %s ]",
-                    $stageindex,
-                        sprintf("Testing %s", colored($script, 'yellow')), $res)));
-            }
+            self.check_output(:output($out), :script($script), :stageindex($stageindex), :exit($exit));
         }
     }
 
     return True;
 }
 
-method check_output(Str :$output!, Int :$stage!) returns Bool {
+method check_output(
+    Str :$output!,
+    Str :$script!,
+    Int :$stageindex!,
+    Bool :$exit = True
+) returns Bool {
+    # $output.say if $output !~~ m:i/^$/;
+
+    my $res = colored('OK', 'green');
+
+    $res = colored('WARN', 'yellow') if $output ~~ m:i/^$/;
+    $res = colored('SKIP', 'red') if $output ~~ m:i/'# skip'/;
+    $res = colored('FAIL', 'red') if $output ~~ /'not ok'/;
+
+    self.debugmsg(:m(sprintf("%02d. %-" ~ $!linesz ~ "s[ %s ]",
+        $stageindex,
+            sprintf("Testing %s", colored($script, 'yellow')), $res)));
+
+    if $output ~~ /'not ok'/ {
+        return self.failure_exit(:stageindex($stageindex), :exit($exit));
+    }
+
     return True;
 }
 
@@ -173,8 +183,8 @@ method process_substages(Int :$stage!, Int :$substage) returns Bool {
     return True;
 }
 
-method failure_exit(Int :$stage!, Bool :$exit = True) returns Bool {
-    self.debugmsg(:m(sprintf("[ %s ]", colored(sprintf("error at stage %d", $stage), 'red'))));
+method failure_exit(Int :$stageindex!, Bool :$exit = True) returns Bool {
+    self.debugmsg(:m(sprintf("[ %s ]", colored(sprintf("error at stage %d", $stageindex), 'red'))));
 
     shell 'unset PHEIXTESTENGINE';
 
