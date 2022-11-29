@@ -16,7 +16,8 @@ has Bool $.test          is default(False);
 has Bool $.colorize      is default(False);
 has Bool $.logfirststage is default(False);
 has Rat  $.coverage      is default(0.0);
-has Int  $.iterator      is default(0);
+has Int  $.stages        is default(0);
+has Int  $.iterator      is default(1);
 has Int  $.linesz        is default(64);
 has Str  $.processor     is default('jq');
 has Str  $.files_report  is default('[]');
@@ -51,6 +52,12 @@ method debug returns Str {
     return self.^name;
 }
 
+method colored(Str $message, Str $markup) returns Str {
+    return $!colorize ??
+        colored($message, $markup) !!
+            $message;
+}
+
 method run_command(Str :$command!) returns Str {
     return unless $command ne q{};
 
@@ -66,8 +73,8 @@ method process(Bool :$exit = True) returns Bool {
     if !$!configfile || !$!configfile.IO.f {
         self.debugmsg(
             :m(sprintf("%s configuration file %s is not existed",
-                colored('PANIC:', 'red bold'),
-                    colored($!configfile, 'yellow'))));
+                self.colored('PANIC:', 'red bold'),
+                    self.colored($!configfile, 'yellow'))));
 
         %*ENV<PHEIXTESTENGINE>:delete;
 
@@ -84,14 +91,20 @@ method process(Bool :$exit = True) returns Bool {
     if !$testconfig.keys || !$testconfig<stages> || !$testconfig<stages>.elems {
         self.debugmsg(
             :m(sprintf("%s no stages in configuration file are found",
-                colored('WARNING:', 'yellow bold'))));
+                self.colored('WARNING:', 'yellow bold'))));
 
         exit 0 if $exit;
 
         return True;
     }
 
+    $!stages = $testconfig<stages>.elems;
+
+    (1..$!stages).map({ @!coveragestats[$_ - 1] = 0; });
+
     self.process_stages(:stages($testconfig<stages>), :exit($exit));
+
+    # @!coveragestats.gist.say;
 
     return True;
 }
@@ -101,23 +114,34 @@ method check_output(
     Str  :$script!,
     Int  :$stageindex!,
     Hash :$stage!,
-    Bool :$exit = True
+    Bool :$exit = True,
+    Bool :$issubstage = False
 ) returns Bool {
     # $output.say if $output !~~ m:i/^$/;
 
-    my $res = colored('OK', 'green');
+    $!coverage     = $!iterator * 100 / $!stages;
+    my $percentage = sprintf("%d%% covered", $!coverage);
 
-    $res = colored('WARN', 'yellow') if $output ~~ m:i/^$/;
-    $res = colored('SKIP', 'red') if $output ~~ m:i/'# skip'/;
-    $res = colored('FAIL', 'red') if $output ~~ /'not ok'/;
+    my $res = self.colored($percentage, 'green');
+
+    $res = self.colored('OK', 'green')    if $issubstage;
+    $res = self.colored('WARN', 'yellow') if $output ~~ m:i/^$/;
+    $res = self.colored('SKIP', 'red')    if $output ~~ m:i/'# skip'/;
+    $res = self.colored('FAIL', 'red')    if $output ~~ /'not ok'/;
 
     self.debugmsg(:m(sprintf("%02d. %-" ~ $!linesz ~ "s[ %s ]",
         $stageindex,
-            sprintf("Testing %s", colored($script, 'yellow')), $res)));
+            sprintf("Testing %s", self.colored($script, 'yellow')), $res)))
+                if !$issubstage;
 
     if $output ~~ /'not ok'/ {
         self.stage_env(:mode(cleanup), :stage($stage));
         return self.failure_exit(:stageindex($stageindex), :exit($exit));
+    }
+
+    if !$issubstage && $output !~~ m:i/'# skip'/ {
+        $!iterator++;
+        @!coveragestats[$stageindex - 1] = 100;
     }
 
     return True;
@@ -140,8 +164,8 @@ method stage_is_skipped(Int :$stageindex!, Str :$script!) returns Bool {
 
         self.debugmsg(
             :m(sprintf("%s %-" ~ $!linesz ~ "s",
-                colored(sprintf("%02d.", $stageindex), 'black on_white'),
-                    sprintf("Skipping tests for %s", colored($script, 'yellow')))),
+                self.colored(sprintf("%02d.", $stageindex), 'black on_white'),
+                    sprintf("Skipping tests for %s", self.colored($script, 'yellow')))),
             :nl(False),
         );
 
@@ -197,14 +221,13 @@ method process_stages(
     return False unless $stages.elems;
 
     for $stages.kv -> $index, $stage {
-        my $stageindex          = $index + 1;
-        @!coveragestats[$index] = 0;
+        my $stageindex = $index + 1;
 
         my $command = self.get_stage_command(:stage($stage));
         (my $script = $command) ~~ s:g/^(perl|perl6|raku)\s*(\S+).*/$1/;
 
         if !$issubstage && self.stage_is_skipped(:stageindex($stageindex), :script($script)) {
-            self.debugmsg(:m(sprintf("[ %s ]", colored('SKIP', 'red'))));
+            self.debugmsg(:m(sprintf("[ %s ]", self.colored('SKIP', 'red'))));
         }
         else {
             self.stage_env(:stage($stage));
@@ -214,7 +237,8 @@ method process_stages(
                 :script($script),
                 :stageindex($parentindex // $stageindex),
                 :stage($stage),
-                :exit($exit)
+                :exit($exit),
+                :issubstage($issubstage),
             );
 
             self.process_stages(
@@ -232,7 +256,7 @@ method process_stages(
 }
 
 method failure_exit(Int :$stageindex!, Bool :$exit = True) returns Bool {
-    self.debugmsg(:m(sprintf("[ %s ]", colored(sprintf("error at stage %d", $stageindex), 'red'))));
+    self.debugmsg(:m(sprintf("[ %s ]", self.colored(sprintf("error at stage %d", $stageindex), 'red'))));
 
     %*ENV<PHEIXTESTENGINE>:delete;
 
