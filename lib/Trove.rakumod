@@ -41,7 +41,7 @@ has Hash $!env = {
     CURRVER => $!currver,
 }
 
-enum EnvMode <set unset>;
+enum EnvMode <environment cleanup>;
 
 method debug returns Str {
     for self.^attributes -> $attr {
@@ -51,8 +51,17 @@ method debug returns Str {
     return self.^name;
 }
 
+method run_command(Str :$command!) returns Str {
+    return unless $command ne q{};
+
+    my @run  = $command.split(/\s+/, :skip-empty);
+    my $proc = run @run, :out, :env(%*ENV);
+
+    return $proc.out.slurp: :close;
+}
+
 method process(Bool :$exit = True) returns Bool {
-    shell 'export PHEIXTESTENGINE=1';
+    %*ENV<PHEIXTESTENGINE> = 1;
 
     if !$!configfile || !$!configfile.IO.f {
         self.debugmsg(
@@ -60,7 +69,7 @@ method process(Bool :$exit = True) returns Bool {
                 colored('PANIC:', 'red bold'),
                     colored($!configfile, 'yellow'))));
 
-        shell 'unset PHEIXTESTENGINE';
+        %*ENV<PHEIXTESTENGINE>:delete;
 
         exit 1 if $exit;
 
@@ -82,33 +91,16 @@ method process(Bool :$exit = True) returns Bool {
         return True;
     }
 
-    for $testconfig<stages>.kv -> $index, $stage {
-        my $stageindex          = $index + 1;
-        @!coveragestats[$index] = 0;
-
-        my $command = self.get_stage_command(:stage($stage));
-        (my $script = $command) ~~ s:g/^(perl|perl6|raku)\s*(\S+).*/$1/;
-
-        if self.stage_is_skipped(:stageindex($stageindex), :script($script)) {
-            self.debugmsg(:m(sprintf("[ %s ]", colored('SKIP', 'red'))));
-        }
-        else {
-            my @run  = $command.split(/\s+/, :skip-empty);
-
-            my $proc = run @run, :out;
-            my $out  = $proc.out.slurp: :close;
-
-            self.check_output(:output($out), :script($script), :stageindex($stageindex), :exit($exit));
-        }
-    }
+    self.process_stages(:stages($testconfig<stages>), :exit($exit));
 
     return True;
 }
 
 method check_output(
-    Str :$output!,
-    Str :$script!,
-    Int :$stageindex!,
+    Str  :$output!,
+    Str  :$script!,
+    Int  :$stageindex!,
+    Hash :$stage!,
     Bool :$exit = True
 ) returns Bool {
     # $output.say if $output !~~ m:i/^$/;
@@ -124,6 +116,7 @@ method check_output(
             sprintf("Testing %s", colored($script, 'yellow')), $res)));
 
     if $output ~~ /'not ok'/ {
+        self.stage_env(:mode(cleanup), :stage($stage));
         return self.failure_exit(:stageindex($stageindex), :exit($exit));
     }
 
@@ -160,7 +153,23 @@ method stage_is_skipped(Int :$stageindex!, Str :$script!) returns Bool {
     return $is_skipped;
 }
 
-method stage_env (EnvMode :$mode = (set), Int :$stage!, Int :$substage) {
+method stage_env(EnvMode :$mode = (environment), Hash :$stage!) returns Bool {
+    return False unless $stage.keys && $stage{$mode} && $stage{$mode}.elems;
+
+    for $stage{$mode}.kv -> $commanindex, $command {
+        if $command ~~ /('unset'|'export')\s*(.*)/ {
+            my $commarg = $1;
+
+            %*ENV{$commarg}:delete if $mode == cleanup;
+
+            if $mode == environment {
+                my @pair = $commarg.split(q{=}, :skip-empty);
+
+                %*ENV{@pair[0]} = @pair[1] if @pair && @pair.elems == 2;
+            }
+        }
+    }
+
     return True;
 }
 
@@ -179,14 +188,53 @@ method get_stage_command(Hash :$stage!) returns Str {
     return $command;
 }
 
-method process_substages(Int :$stage!, Int :$substage) returns Bool {
+method process_stages(
+    List :$stages!,
+    Bool :$issubstage = False,
+    Int  :$parentindex,
+    Bool :$exit = True
+) returns Bool {
+    return False unless $stages.elems;
+
+    for $stages.kv -> $index, $stage {
+        my $stageindex          = $index + 1;
+        @!coveragestats[$index] = 0;
+
+        my $command = self.get_stage_command(:stage($stage));
+        (my $script = $command) ~~ s:g/^(perl|perl6|raku)\s*(\S+).*/$1/;
+
+        if !$issubstage && self.stage_is_skipped(:stageindex($stageindex), :script($script)) {
+            self.debugmsg(:m(sprintf("[ %s ]", colored('SKIP', 'red'))));
+        }
+        else {
+            self.stage_env(:stage($stage));
+
+            self.check_output(
+                :output(self.run_command(:command($command))),
+                :script($script),
+                :stageindex($parentindex // $stageindex),
+                :stage($stage),
+                :exit($exit)
+            );
+
+            self.process_stages(
+                :stages($stage<substages>),
+                :parentindex($parentindex // $stageindex),
+                :issubstage(True),
+                :exit($exit)
+            ) if $stage<substages> && $stage<substages> ~~ List;
+
+            self.stage_env(:mode(cleanup), :stage($stage));
+        }
+    }
+
     return True;
 }
 
 method failure_exit(Int :$stageindex!, Bool :$exit = True) returns Bool {
     self.debugmsg(:m(sprintf("[ %s ]", colored(sprintf("error at stage %d", $stageindex), 'red'))));
 
-    shell 'unset PHEIXTESTENGINE';
+    %*ENV<PHEIXTESTENGINE>:delete;
 
     exit 3 if $exit;
 
