@@ -4,10 +4,12 @@ use HTTP::UserAgent;
 use HTTP::Request::Common;
 use HTTP::Request::FormData;
 use JSON::Fast;
+use Test;
 
-has Str $.endpoint;
-has Str $.token;
-has Str $.origin;
+has Bool $.test = False;
+has Str  $.endpoint;
+has Str  $.token;
+has Str  $.origin;
 
 method send(List :$files!) returns Int {
     return 1 unless $!token && $!endpoint;
@@ -49,7 +51,7 @@ method send(List :$files!) returns Int {
  
         CATCH {
             default {
-                say sprintf("coverall endpoint <%s> request failure: ", $!endpoint), .^name, ': ',.Str
+                self.msg(:m(sprintf("coverall endpoint <%s> request exception <%s>: %s", $!endpoint, .^name, .Str)));
             }
         }
     }
@@ -57,10 +59,10 @@ method send(List :$files!) returns Int {
     return 3 if !$response;
 
     if $response.is-success {
-        from-json($response.content)<url>.say;
+        self.msg(:m(from-json($response.content)<url>));
     }
     else {
-        to-json(from-json($response.content), :pretty).say;
+        self.msg(:m(to-json(from-json($response.content), :pretty)));
 
         return 4;
     }
@@ -75,4 +77,8 @@ method run_command(Str :$command!) returns Str {
     my $proc = run @run, :out, :env(%*ENV);
 
     return $proc.out.slurp: :close;
+}
+
+method msg(Str :$m) {
+    $!test ?? diag($m) !! $m.say;
 }

@@ -292,7 +292,7 @@ method coveralls(List :$stages!) returns Bool {
     }
 
     my $ret = Trove::Coveralls
-        .new(:token(%*ENV<COVERALLSTOKEN>), :endpoint($!coveralls), :origin($!origin))
+        .new(:token(%*ENV<COVERALLSTOKEN>), :endpoint($!coveralls), :origin($!origin), :test($!test))
         .send(:files(@files_report));
 
     self.debugmsg(:m(@files_report.map({$_.gist}).join(q{,})));
