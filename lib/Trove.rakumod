@@ -3,6 +3,7 @@ unit class Trove;
 use Digest::MD5;
 use Terminal::ANSIColor;
 use Trove::Config::Parser;
+use Trove::Coveralls;
 use Test;
 
 has Str  $.configfile;
@@ -12,6 +13,7 @@ has Str  $.skipped;
 has      $.skippedstages;
 has      @.coveragestats;
 
+has Bool $.silent        is default(False);
 has Bool $.test          is default(False);
 has Bool $.colorize      is default(False);
 has Bool $.logfirststage is default(False);
@@ -103,7 +105,7 @@ method process(Bool :$exit = True) returns Bool {
     (1..$!stages).map({ @!coveragestats[$_ - 1] = 0; });
 
     self.process_stages(:stages($testconfig<stages>), :exit($exit));
-
+    self.coveralls(:stages($testconfig<stages>));
     # @!coveragestats.gist.say;
 
     return True;
@@ -265,11 +267,53 @@ method failure_exit(Int :$stageindex!, Bool :$exit = True) returns Bool {
     return False;
 }
 
-method multipart_data(Str :$data!) returns Str {
-    return Str;
+method coveralls(List :$stages!) returns Bool {
+    if !%*ENV<CI_JOB_ID> {
+        self.debugmsg(:m(sprintf("Skip send report to %s: CI/CD identifier is missed", self.colored('coveralls.io', 'yellow'))));
+
+        return False;
+    }
+
+    if !%*ENV<COVERALLSENDPOINT> {
+        self.debugmsg(:m(sprintf("Skip send report to %s: endpoint is missed", self.colored('coveralls.io', 'yellow'))));
+
+        return False;
+    }
+
+    if !%*ENV<COVERALLSTOKEN> {
+        self.debugmsg(:m(sprintf("Skip send report to %s: token is missed", self.colored('coveralls.io', 'yellow'))));
+
+        return False;
+    }
+
+    return False unless $stages.elems;
+
+    my @files_report;
+
+    for $stages.kv -> $index, $stage {
+        my $stageindex = $index + 1;
+
+        my $command = self.get_stage_command(:stage($stage));
+        (my $script = $command) ~~ s:g/^(perl|perl6|raku)\s*(\S+).*/$1/;
+
+        my $digest   = Digest::MD5.new.md5_hex($script ~ DateTime.now.Str);
+        my $coverage = @!coveragestats[$index];
+
+        @files_report.push({ name => $script, source_digest => $digest, coverage => $coverage });
+    }
+
+    my $ret = Trove::Coveralls
+        .new(:token(%*ENV<COVERALLSTOKEN>), :endpoint(%*ENV<COVERALLSENDPOINT>))
+        .send(:files(@files_report));
+
+    self.debugmsg(:m(@files_report.map({$_.gist}).join(q{,})));
+
+    return $ret == 0 ?? True !! False;
 }
 
 method debugmsg(Str :$m!, Bool :$nl = True) {
+    return if $!silent;
+
     $!test ?? diag($m) !! ($nl ?? $m.say !! $m.printf);
 }
 

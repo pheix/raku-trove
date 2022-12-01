@@ -2,12 +2,18 @@
     "perl"        : "6.d",
     "name"        : "Trove",
     "authors"     : [ "Konstantin Narkhov" ],
-    "version"     : "0.0.11",
+    "version"     : "0.0.12",
     "description" : "Yet another test harness",
-    "depends"     : [],
+    "depends"     : [
+        "Digest::MD5",
+        "Terminal::ANSIColor",
+        "JSON::Fast",
+        "YAMLish"
+    ],
     "license"     : "Artistic-2.0",
     "provides"    : {
         "Trove"                 : "lib/Trove.rakumod",
+        "Trove::Coveralls"      : "lib/Trove/Coveralls.rakumod",
         "Trove::Config::Parser" : "lib/Trove/Config/Parser.rakumod"
     },
     "tags"        : [ "TROVE", "TEST", "HARNESS" ],
