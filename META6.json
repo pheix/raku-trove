@@ -2,13 +2,16 @@
     "perl"        : "6.d",
     "name"        : "Trove",
     "authors"     : [ "Konstantin Narkhov" ],
-    "version"     : "0.0.12",
+    "version"     : "0.0.13",
     "description" : "Yet another test harness",
     "depends"     : [
         "Digest::MD5",
         "Terminal::ANSIColor",
         "JSON::Fast",
-        "YAMLish"
+        "YAMLish",
+        "HTTP::Request::FormData",
+        "HTTP::UserAgent",
+        "HTTP::Request::Common"
     ],
     "license"     : "Artistic-2.0",
     "provides"    : {

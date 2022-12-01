@@ -6,6 +6,7 @@ before_script:
   - zef --debug --depsonly install git://github.com/ugexe/zef.git
 test:
   script:
+    - zef --deps-only install .
     - prove6 -Ilib ./t/
     - zef --verbose install .
     - RAKULIB=./lib trove-cli -c -l --s='1' --f=`pwd`/x/trove-configs/test.conf.yaml --v='0.0.1' --g=`pwd` -p=yq

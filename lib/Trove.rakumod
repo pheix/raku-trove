@@ -61,12 +61,7 @@ method colored(Str $message, Str $markup) returns Str {
 }
 
 method run_command(Str :$command!) returns Str {
-    return unless $command ne q{};
-
-    my @run  = $command.split(/\s+/, :skip-empty);
-    my $proc = run @run, :out, :env(%*ENV);
-
-    return $proc.out.slurp: :close;
+    return Trove::Coveralls.new.run_command(:command($command));
 }
 
 method process(Bool :$exit = True) returns Bool {
@@ -274,12 +269,6 @@ method coveralls(List :$stages!) returns Bool {
         return False;
     }
 
-    if !%*ENV<COVERALLSENDPOINT> {
-        self.debugmsg(:m(sprintf("Skip send report to %s: endpoint is missed", self.colored('coveralls.io', 'yellow'))));
-
-        return False;
-    }
-
     if !%*ENV<COVERALLSTOKEN> {
         self.debugmsg(:m(sprintf("Skip send report to %s: token is missed", self.colored('coveralls.io', 'yellow'))));
 
@@ -303,7 +292,7 @@ method coveralls(List :$stages!) returns Bool {
     }
 
     my $ret = Trove::Coveralls
-        .new(:token(%*ENV<COVERALLSTOKEN>), :endpoint(%*ENV<COVERALLSENDPOINT>))
+        .new(:token(%*ENV<COVERALLSTOKEN>), :endpoint($!coveralls), :origin($!origin))
         .send(:files(@files_report));
 
     self.debugmsg(:m(@files_report.map({$_.gist}).join(q{,})));

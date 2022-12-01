@@ -23,7 +23,7 @@ subtest {
         .new(:configfile($cfn), :test(True), :coveragestats((0..30)))
         .coveralls(:stages($c<stages>)),
 
-    ok $r, 'coveralls wrapper';
+    nok $r, 'coveralls wrapper';
 
     unset_env;
 }, 'check Coveralls wrapper';
@@ -31,7 +31,7 @@ subtest {
 done-testing;
 
 sub set_env {
-    @env.map({%*ENV{$_} = ~1;});
+    @env.map({%*ENV{$_} = ~1 unless %*ENV{$_} && %*ENV{$_} ne q{};});
 }
 
 sub unset_env {
