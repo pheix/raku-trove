@@ -22,9 +22,20 @@ method send(List :$files!) returns Int {
 
     if !$!test {
         ($gitbranch = %*ENV<CI_COMMIT_BRANCH> // self.run_command(:command('git branch --show-current'))) ~~ s/<[\n\r]>+//;
-        $githead    = self.run_command(:command('git log -1 --pretty=format:\'{id:"%H",author_name:"%aN",author_email:"%aE",committer_name:"%cN",committer_email:"%cE",message:"%f"}\''));
+
+        my $git = self.run_command(:command('git log -1 --pretty=format:\'{id:"%H",author_name:"%aN",author_email:"%aE",committer_name:"%cN",committer_email:"%cE",message:"%f"}\''));
+
+        try {
+            $githead = from-json($git);
+
+            CATCH {
+                default {
+                    self.msg(:m(sprintf("parse git head exception <%s>: %s", .^name, .Str)));
+                }
+            }
+        }
     }
-    
+
     my $coverals = {
         repo_token     => $!token,
         service_job_id => %*ENV<CI_JOB_ID>,
