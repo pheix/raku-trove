@@ -4,7 +4,8 @@ use Test;
 use Trove;
 use Trove::Coveralls;
 
-my @env = <CI_JOB_ID COVERALLSENDPOINT COVERALLSTOKEN>;
+my $silent = (%*ENV<TROVEDEBUG>.defined && %*ENV<TROVEDEBUG> == 1) ?? False !! True;
+my @env    = <CI_JOB_ID COVERALLSENDPOINT COVERALLSTOKEN>;
 
 plan 2;
 
@@ -20,7 +21,7 @@ subtest {
     my $c = Trove::Config::Parser.new.process(:path($cfn), :yaml(True));
 
     my $r = Trove
-        .new(:configfile($cfn), :test(True), :coveragestats((0..30)))
+        .new(:configfile($cfn), :test(True), :coveragestats((0..30)), :silent($silent))
         .coveralls(:stages($c<stages>)),
 
     nok $r, 'coveralls wrapper';

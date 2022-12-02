@@ -26,7 +26,7 @@ has Str  $.files_report  is default('[]');
 has Str  $.www           is default('./www');
 has Str  $.precomp       is default('./lib/.precomp');
 has Str  $.origin        is default('git@gitlab.com:pheix-pool/core-perl6.git');
-has Str  $.successtoken  is default(Digest::MD5.new.md5_hex('Trove'));
+has Str  $.dummystoken   is default(Digest::MD5.new.md5_hex('Trove'));
 has Str  $.coveralls     is default('https://coveralls.io/api/v1/jobs');
 has Str  $.date          is default(
     DateTime.now(
@@ -61,6 +61,8 @@ method colored(Str $message, Str $markup) returns Str {
 }
 
 method run_command(Str :$command!) returns Str {
+    return q{} if $!test;
+
     return Trove::Coveralls.new.run_command(:command($command));
 }
 
@@ -292,10 +294,15 @@ method coveralls(List :$stages!) returns Bool {
     }
 
     my $ret = Trove::Coveralls
-        .new(:token(%*ENV<COVERALLSTOKEN>), :endpoint($!coveralls), :origin($!origin), :test($!test))
+        .new(
+            :token($!test ?? $!dummystoken !! %*ENV<COVERALLSTOKEN>),
+            :endpoint($!coveralls),
+            :origin($!origin),
+            :test($!test),
+            :silent($!silent))
         .send(:files(@files_report));
 
-    self.debugmsg(:m(@files_report.map({$_.gist}).join(q{,})));
+    self.debugmsg(:m(@files_report.map({$_.gist}).join(q{,}))) if $!test;
 
     return $ret == 0 ?? True !! False;
 }

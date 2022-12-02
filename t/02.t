@@ -14,7 +14,7 @@ my $yaml   = $parser.process(:path('./x/pheix-configs/test.conf.yaml'), :yaml(Tr
 is $json<stages>.elems, $yaml<stages>.elems, 'stages num in yaml is equal to json';
 
 if %*ENV<PHEIXTESTENGINE>:!exists {
-    diag('PHEIXTESTENGINE was not set');
+    # diag('PHEIXTESTENGINE was not set');
     skip-rest('skip integration tests');
 
     exit;

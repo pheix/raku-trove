@@ -6,7 +6,8 @@ use HTTP::Request::FormData;
 use JSON::Fast;
 use Test;
 
-has Bool $.test = False;
+has Bool $.silent = False;
+has Bool $.test   = False;
 has Str  $.endpoint;
 has Str  $.token;
 has Str  $.origin;
@@ -16,10 +17,14 @@ method send(List :$files!) returns Int {
 
     return 2 unless $files.elems;
 
-    (my $gitbranch = %*ENV<GITBRANCH> // self.run_command(:command('git branch --show-current'))) ~~ s/<[\n\r]>+//;
+    my $gitbranch;
+    my $githead;
 
-    my $githead = self.run_command(:command('git log -1 --pretty=format:\'{id:"%H",author_name:"%aN",author_email:"%aE",committer_name:"%cN",committer_email:"%cE",message:"%f"}\''));
-
+    if !$!test {
+        ($gitbranch = %*ENV<CI_COMMIT_BRANCH> // self.run_command(:command('git branch --show-current'))) ~~ s/<[\n\r]>+//;
+        $githead    = self.run_command(:command('git log -1 --pretty=format:\'{id:"%H",author_name:"%aN",author_email:"%aE",committer_name:"%cN",committer_email:"%cE",message:"%f"}\''));
+    }
+    
     my $coverals = {
         repo_token     => $!token,
         service_job_id => %*ENV<CI_JOB_ID>,
@@ -80,5 +85,7 @@ method run_command(Str :$command!) returns Str {
 }
 
 method msg(Str :$m) {
+    return if $!silent;
+
     $!test ?? diag($m) !! $m.say;
 }
