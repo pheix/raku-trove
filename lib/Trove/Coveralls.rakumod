@@ -23,7 +23,7 @@ method send(List :$files!) returns Int {
     if !$!test {
         ($gitbranch = %*ENV<CI_COMMIT_BRANCH> // self.run_command(:command('git branch --show-current'))) ~~ s/<[\n\r]>+//;
 
-        my $git = self.run_command(:command('git log -1 --pretty=format:\'{id:"%H",author_name:"%aN",author_email:"%aE",committer_name:"%cN",committer_email:"%cE",message:"%f"}\''));
+        (my $git = self.run_command(:command('git log -1 --pretty=format:\'{"id":"%H","author_name":"%aN","author_email":"%aE","committer_name":"%cN","committer_email":"%cE","message":"%f"}\''))) ~~ s:g/'\''//;
 
         try {
             $githead = from-json($git);
