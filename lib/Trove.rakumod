@@ -290,7 +290,7 @@ method coveralls(List :$stages!) returns Bool {
         my $digest   = Digest::MD5.new.md5_hex($script ~ DateTime.now.Str);
         my $coverage = @!coveragestats[$index];
 
-        @files_report.push({ name => $script, source_digest => $digest, coverage => $coverage });
+        @files_report.push({ name => $script, source_digest => $digest, coverage => [$coverage] });
     }
 
     my $ret = Trove::Coveralls
