@@ -18,6 +18,9 @@
                   "test":"ls -la /etc"
               }
           ]
-       }
+      },
+      {
+         "test":"raku ./t/03.t"
+      }
    ]
 }
