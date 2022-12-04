@@ -20,10 +20,10 @@ has Rat  $.coverage      is default(0.0);
 has Int  $.stages        is default(0);
 has Int  $.iterator      is default(1);
 has Int  $.linesz        is default(64);
+has Str  $.gitpath       is default('.');
 has Str  $.processor     is default('jq');
 has Str  $.files_report  is default('[]');
-has Str  $.www           is default('./www');
-has Str  $.origin        is default('git@gitlab.com:pheix-pool/core-perl6.git');
+has Str  $.origin        is default('git@gitlab.com:pheix/raku-trove.git');
 has Str  $.dummystoken   is default(Digest::MD5.new.md5_hex('Trove'));
 has Str  $.coveralls     is default('https://coveralls.io/api/v1/jobs');
 has Str  $.date = DateTime.now(
@@ -33,7 +33,7 @@ has Str  $.date = DateTime.now(
 has Str  $.testlog = sprintf("./testreport.%s.log", $!date);
 
 has Hash $!env = {
-    WWW     => $!www,
+    WWW     => './www',
     GITVER  => $!gitver,
     CURRVER => $!currver,
 }
@@ -110,8 +110,6 @@ method check_output(
     Bool :$exit = True,
     Bool :$issubstage = False
 ) returns Bool {
-    # $output.say if $output !~~ m:i/^$/;
-
     $!coverage     = $!iterator * 100 / $!stages;
     my $percentage = sprintf("%d%% covered", $!coverage);
 
@@ -292,6 +290,7 @@ method coveralls(List :$stages!) returns Bool {
 
     my $ret = Trove::Coveralls
         .new(
+            :gitpath($!gitpath),
             :token($!test ?? $!dummystoken !! %*ENV<COVERALLSTOKEN>),
             :endpoint($!coveralls),
             :origin($!origin),

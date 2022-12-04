@@ -8,6 +8,7 @@ use Test;
 
 has Bool $.silent = False;
 has Bool $.test   = False;
+has Str  $.gitpath;
 has Str  $.endpoint;
 has Str  $.token;
 has Str  $.origin;
@@ -21,9 +22,10 @@ method send(List :$files!) returns Int {
     my $githead;
 
     if !$!test {
-        ($gitbranch = %*ENV<CI_COMMIT_BRANCH> // self.run_command(:command('git branch --show-current'))) ~~ s/<[\n\r]>+//;
+        my $gitpath  = $!gitpath && ($!gitpath ~ "/.git").IO.d ?? sprintf("--git-dir=%s/.git", $!gitpath) !! q{};
+        ($gitbranch  = %*ENV<CI_COMMIT_BRANCH> // self.run_command(:command(sprintf("git %s branch --show-current", $gitpath)))) ~~ s/<[\n\r]>+//;
 
-        (my $git = self.run_command(:command('git log -1 --pretty=format:\'{"id":"%H","author_name":"%aN","author_email":"%aE","committer_name":"%cN","committer_email":"%cE","message":"%f"}\''))) ~~ s:g/'\''//;
+        (my $git = self.run_command(:command(sprintf("git %s log -1 --pretty=format:'%s'", $gitpath, '{"id":"%H","author_name":"%aN","author_email":"%aE","committer_name":"%cN","committer_email":"%cE","message":"%f"}')))) ~~ s:g/'\''//;
 
         try {
             $githead = from-json($git);
@@ -49,6 +51,8 @@ method send(List :$files!) returns Int {
     };
 
     my $coveralls_json = to-json($coverals);
+
+    # self.msg(:m($coveralls_json));
 
     my $fd = HTTP::Request::FormData.new;
 

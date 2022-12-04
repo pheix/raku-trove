@@ -1,0 +1,23 @@
+{
+   "target":"Pheix test suite",
+   "stages":[
+       {
+          "test":"raku ./t/01.t"
+       },
+       {
+          "test":"raku ./t/02.t",
+          "environment":[
+             "export TROVE_ENV_VAR=magic-trove-env-value"
+          ],
+          "cleanup":[
+             "unset TROVE_ENV_VAR"
+          ],
+          "substages":[
+              {
+                  "test":"ls -la .",
+                  "test":"ls -la /etc"
+              }
+          ]
+       }
+   ]
+}

@@ -5,13 +5,14 @@ use Trove;
 enum Proc <jq yq>;
 
 sub MAIN (
-    Str  :$g,
+    Str  :$g = '.',
     Str  :$v,
     Str  :$s,
     Bool :$c = False,
     Proc :$p = (jq),
     Str  :$f,
-    Bool :$l = False
+    Bool :$l = False,
+    Str  :$o
 )
 {
     my Str $gitver;
@@ -29,15 +30,17 @@ sub MAIN (
         processor => ~$p,
         currver   => $v,
         gitver    => $gitver,
+        gitpath   => $g,
         colorize  => $c,
+        origin    => $o,
         logfirststage => $l,
         skippedstages => $s && $s ~~ /^ <[\d,\s]>+ $/ ?? $s.split(/\s*\,\s*/, :skip-empty) !! List.new,
         $f && $f.IO.f ??
             (configfile => $f) !!
                 (configfile =>
                     ($p eq 'jq' ??
-                        './x/run-tests.conf.json' !!
-                            './x/run-tests.conf.yaml'
+                        './x/trove-configs/test.conf.json' !!
+                            './x/trove-configs/test.conf.yaml'
                     )
                 ),
     ;
