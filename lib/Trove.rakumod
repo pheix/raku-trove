@@ -9,7 +9,6 @@ use Test;
 has Str  $.configfile;
 has Str  $.gitver;
 has Str  $.currver;
-has Str  $.skipped;
 has      $.skippedstages;
 has      @.coveragestats;
 
@@ -24,19 +23,14 @@ has Int  $.linesz        is default(64);
 has Str  $.processor     is default('jq');
 has Str  $.files_report  is default('[]');
 has Str  $.www           is default('./www');
-has Str  $.precomp       is default('./lib/.precomp');
 has Str  $.origin        is default('git@gitlab.com:pheix-pool/core-perl6.git');
 has Str  $.dummystoken   is default(Digest::MD5.new.md5_hex('Trove'));
 has Str  $.coveralls     is default('https://coveralls.io/api/v1/jobs');
-has Str  $.date          is default(
-    DateTime.now(
-        formatter => { sprintf "%d-%02d-%02d_%02d-%02d-%02d",
-            .year, .month, .day, .hour, .minute, .second }).Str
-);
+has Str  $.date = DateTime.now(
+    formatter => { sprintf "%d-%02d-%02d_%02d-%02d-%02d",
+        .year, .month, .day, .hour, .minute, .second }).Str;
 
-has Str  $.gitbranch      = %*ENV<CI_COMMIT_BRANCH> // q{};
-has Str  $.testlog        = sprintf("./testreport.%s.log", $!date);
-has Str  $.multipartdelim = sprintf("-----%s", Digest::MD5.new.md5_hex($!date));
+has Str  $.testlog = sprintf("./testreport.%s.log", $!date);
 
 has Hash $!env = {
     WWW     => $!www,
@@ -128,6 +122,9 @@ method check_output(
     $res = self.colored('SKIP', 'red')    if $output ~~ m:i/'# skip'/;
     $res = self.colored('FAIL', 'red')    if $output ~~ /'not ok'/;
 
+    self.write_to_log(:data(sprintf("----------- STAGE no.%d -----------\n%s\n", $stageindex, $output)))
+        if ($!logfirststage && $stageindex == 1) || $stageindex > 1;
+
     self.debugmsg(:m(sprintf("%02d. %-" ~ $!linesz ~ "s[ %s ]",
         $stageindex,
             sprintf("Testing %s", self.colored($script, 'yellow')), $res)))
@@ -159,7 +156,7 @@ method stage_is_skipped(Int :$stageindex!, Str :$script!) returns Bool {
         next if $index != $stageindex;
 
         $is_skipped = True;
-        $!skipped = sprintf("# SKIP: stage no.%d is skipped via command line", $stageindex);
+        my $skipped = sprintf("# SKIP: stage no.%d is skipped via command line", $stageindex);
 
         self.debugmsg(
             :m(sprintf("%s %-" ~ $!linesz ~ "s",
@@ -168,7 +165,7 @@ method stage_is_skipped(Int :$stageindex!, Str :$script!) returns Bool {
             :nl(False),
         );
 
-        self.write_to_log(:data(sprintf("----------- STAGE no.%d -----------\n%s\n", $stageindex, $!skipped)));
+        self.write_to_log(:data(sprintf("----------- STAGE no.%d -----------\n%s\n", $stageindex, $skipped)));
 
         last;
     }
