@@ -1,0 +1,7 @@
+target: Trivial one-liner test
+stages:
+  - test: raku  -eok(1,'true'); -MTest
+  - test: perl6 -eis($CONSTANT,2,'2=2'); -MTest
+    args:
+      - CONSTANT
+  - test: perl  -eok(3,'perl5');done_testing; -MTest::More

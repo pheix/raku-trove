@@ -17,7 +17,7 @@ sub MAIN (
 {
     my Str $gitver;
 
-    if $g && $g.IO.d {
+    if $g && $g.IO.d && "$g/.git".IO.d {
         my $proc = run 'git', "--git-dir=$g/.git", "--work-tree=$g", 'log', '-1', :out;
         my $out  = $proc.out.slurp: :close;
 
