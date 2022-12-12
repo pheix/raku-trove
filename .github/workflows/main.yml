@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    container:
+      image: rakudo-star:latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Raku version
+        run: raku -v
+
+      - name: Install dependencies
+        run: zef install --deps-only --/test --test-depends .
+
+      - name: Run prove6 app tests
+        run: prove6 -Ilib t
+
+      - name: Run full zef install
+        run: zef --verbose install .
+
+      - name: Run trove app tests
+        run: RAKULIB=./lib trove-cli -c -l --s='1' --f=`pwd`/x/trove-configs/test.conf.yaml --p=yq
+
+      - name: Archive test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: testreport*
