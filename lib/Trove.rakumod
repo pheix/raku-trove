@@ -24,7 +24,7 @@ has Str  $.gitpath       is default('.');
 has Str  $.processor     is default('jq');
 has Str  $.files_report  is default('[]');
 has Str  $.origin        is default('git@gitlab.com:pheix/raku-trove.git');
-has Str  $.dummystoken   is default(Digest::MD5.new.md5_hex('Trove'));
+has Str  $.dummystoken   is default(md5('Trove').list.map({$_.base(16)}).join);
 has Str  $.coveralls     is default('https://coveralls.io/api/v1/jobs');
 has Str  $.date = DateTime.now(
     formatter => { sprintf "%d-%02d-%02d_%02d-%02d-%02d",
@@ -285,7 +285,9 @@ method coveralls(List :$stages!) returns Bool {
         my $command = self.get_stage_command(:stage($stage));
         (my $script = $command) ~~ s:g/^(perl|perl6|raku)\s*(\S+).*/$1/;
 
-        my $digest   = Digest::MD5.new.md5_hex($script ~ DateTime.now.Str);
+        my $digest =
+            md5($script ~ DateTime.now.Str).list.map({$_.base(16)}).join;
+
         my $coverage = @!coveragestats[$index];
 
         @files_report.push({ name => $script, source_digest => $digest, coverage => [$coverage] });
