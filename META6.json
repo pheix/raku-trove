@@ -2,7 +2,7 @@
     "perl"        : "6.d",
     "name"        : "Trove",
     "authors"     : [ "Konstantin Narkhov" ],
-    "version"     : "0.0.28",
+    "version"     : "0.0.29",
     "description" : "Yet another test harness",
     "depends"     : [
         "Test",
@@ -21,6 +21,6 @@
         "Trove::Config::Parser" : "lib/Trove/Config/Parser.rakumod"
     },
     "tags"        : [ "TROVE", "TEST", "HARNESS" ],
-    "source-url"  : "https://gitlab.com/pheix/raku-trove.git",
+    "source-url"  : "https://github.com/pheix/raku-trove.git",
     "auth"        : "zef:knarkhov"
 }
