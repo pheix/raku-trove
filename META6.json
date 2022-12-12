@@ -2,11 +2,11 @@
     "perl"        : "6.d",
     "name"        : "Trove",
     "authors"     : [ "Konstantin Narkhov" ],
-    "version"     : "0.0.27",
+    "version"     : "0.0.28",
     "description" : "Yet another test harness",
     "depends"     : [
         "Test",
-        "Digest",
+        "Digest:ver<0.24.0+>",
         "Terminal::ANSIColor",
         "JSON::Fast",
         "YAMLish",
