@@ -90,11 +90,17 @@ method send(List :$files!) returns Int {
     return 0;
 }
 
-method run_command(Str :$command!) returns Str {
+method run_command(Str :$command!, Code :$callback) returns Str {
     return unless $command ne q{};
 
     my @run  = $command.split(/\s+/, :skip-empty);
     my $proc = run @run, :out, :env(%*ENV);
+
+    if $proc.exitcode {
+        $callback() if $callback;
+
+        X::AdHoc.new(:payload(sprintf("command <%s> exit code %d", $command, $proc.exitcode))).throw;
+    }
 
     return $proc.out.slurp: :close;
 }

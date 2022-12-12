@@ -54,10 +54,13 @@ method colored(Str $message, Str $markup) returns Str {
             $message;
 }
 
-method run_command(Str :$command!) returns Str {
+method run_command(Str :$command!, Int :$stageindex = -1, Bool :$exit = True) returns Str {
     return q{} if $!test;
 
-    return Trove::Coveralls.new.run_command(:command($command));
+    return Trove::Coveralls.new.run_command(
+        :command($command),
+        :callback({self.failure_exit(:stageindex($stageindex), :exit($exit))})
+    );
 }
 
 method process(Bool :$exit = True) returns Bool {
@@ -227,7 +230,7 @@ method process_stages(
             self.stage_env(:stage($stage));
 
             self.check_output(
-                :output(self.run_command(:command($command))),
+                :output(self.run_command(:command($command), :stageindex($parentindex // $stageindex), :exit($exit))),
                 :script($script),
                 :stageindex($parentindex // $stageindex),
                 :stage($stage),
