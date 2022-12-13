@@ -2,9 +2,9 @@
 
 ## Concept
 
-Yet another test harness written in Raku language and inspired by `bash` driven test tool built for [Pheix](https://gitlab.com/pheix-pool/core-perl6) content management system.
+Yet another [test harness written in Raku](https://github.com/pheix/raku-trove) language and inspired by `bash` driven test tool built for [Pheix](https://gitlab.com/pheix-pool/core-perl6) content management system.
 
-Generally `Trove` is based on idea the wrapper over the unit tests in `t` folder. But with out-of-the-box Gitlab CI/CD integration, extended logging and test-dependable options.
+Generally `Trove` is based on idea to create the wrapper over the unit tests in `t` folder. But with out-of-the-box Gitlab or Github CI/CD integration, extended logging and test-dependable options.
 
 `Trove` includes `trove-cli` script as a primary worker for batch testing. It iterates over pre-configured stages and runs specific unit test linked to the stage. `trove-cli` is console oriented — all output is printed to `STDOUT` and `STDERR` data streams. Input is taken from command line arguments.
 
@@ -26,8 +26,8 @@ Generally `Trove` is based on idea the wrapper over the unit tests in `t` folder
     * Configuration sections
         * [Test](#test)
         * [Stage and substage](#stage-and-substage)
-   * [Trivial test configuration example](trivial-test-configuration-example)
-   * [Pheix test suite configuration files](pheix-test-suite-configuration-files)
+   * [Trivial test configuration example](#trivial-test-configuration-example)
+   * [Pheix test suite configuration files](#pheix-test-suite-configuration-files)
 3. Test coverage management
    * [Gitlab](#gitlab)
    * [Coveralls](#coveralls)
@@ -52,32 +52,34 @@ To exclude specific stages from test `-s` option is used:
 
 ### File processor configuration
 
-`trove-cli` takes test scenario from configuration file and uses different processors to parse it. Default format is JSON, but you can use YAML on demand, for now only `jq` and `yq` are supported. To switch between the processors the next command line options should be used:
+`trove-cli` takes test scenario from configuration file. Default format is JSON, but you can use YAML on demand, for now `JSON::Fast` and `YAMLish` processing modules (processors) are integrated. To switch between the processors the next command line options should be used:
 
-* `-p jq` or do not use `-p` (default behavior) — JSON processor;
-* `-p yq` — YAML processor.
+* `--p=jq` or do not use `--p` (default behavior) — [JSON](https://github.com/timo/json_fast) processor;
+* `--p=yq` — [YAML](https://github.com/Leont/yamlish) processor.
 
 ### Versions consistency
 
 To verify the version [consistency](https://gitlab.com/pheix-research/talks/-/tree/main/pre-RC2#version-control-consistency-in-git-commit-message-and-pheixmodelversion) on commit, the next command line options should be used:
 
-* `-g` — path to git repo with version at latest commit in format `%0d.%0d.%0d`;
-* `-v` — current version to commit (in format `%0d.%0d.%0d` as well).
+* `--g` — path to git repo with version at latest commit in format `%0d.%0d.%0d`;
+* `--v` — current version to commit (in format `%0d.%0d.%0d` as well).
 
-    trove-cli -c --g=~/git/raku-foo-bar --v=1.0.0
+```
+trove-cli -c --g=~/git/raku-foo-bar --v=1.0.0
+```
 
 ### Target configuration file
 
 By default the next configuration targets are used:
 
-* `jq` — `./x/trove-configs/test.conf.json`;
-* `yq` — `./x/trove-configs/test.conf.yaml`.
+* JSON — `./x/trove-configs/test.conf.json`;
+* YAML — `./x/trove-configs/test.conf.yaml`.
 
 These paths are used to test `Trove` itself with:
 
     cd ~/git/raku-trove && bin/trove-cli -c && bin/trove-cli -c --p=yq
 
-To use another configuration file you have to specify it via `-f` option:
+To use another configuration file you have to specify it via `--f` option:
 
     trove-cli --f=/tmp/custom.jq.conf
 
@@ -85,9 +87,11 @@ To use another configuration file you have to specify it via `-f` option:
 
 `trove-cli` is obviously used to test Pheix. First Pheix testing stage checks `www/user.rakumod` script with:
 
+```bash
     raku $WWW/user.raku --mode=test # WWW == './www'
+```
 
-This command prints nothing to standard output and eventually nothing is needed to be saved to log file. By default first stage output is ignored. But if you use Pheix Tests suite to test some other module or application, i might be handy to force save first stage output. This is done by `-l` command line argument:
+This command prints nothing to standard output and eventually nothing is needed to be saved to log file. By default first stage output is ignored. But if you use Pheix Tests tool to test some other module or application, i might be handy to force save first stage output. This is done by `-l` command line argument:
 
     trove-cli --f=/tmp/custom.jq.conf -l
 
@@ -101,7 +105,7 @@ In case the stage with blank output is not skipped it's taken into coverage scop
 
 ### Origin repository
 
-By default origin repository is set up to `git@gitlab.com:pheix/raku-trove.git` and you can change it to any value you prefer by `-o` argument:
+By default origin repository is set up to `git@github.com:pheix/raku-trove.git` and you can change it to any value you prefer by `-o` argument:
 
     trove-cli --f=/tmp/custom.jq.conf --o=git@gitlab.com:pheix/net-ethereum-perl6.git
 
@@ -124,7 +128,7 @@ By default origin repository is set up to `git@gitlab.com:pheix/raku-trove.git` 
 
 ### Trivial test configuration example
 
-Trivial multi-interpreter one-liner test [configuration file](https://gitlab.com/pheix/raku-trove/-/blob/main/x/trove-configs/tests.conf.yml.oneliner) is included to `Trove`:
+Trivial multi-interpreter one-liner test [configuration file](https://github.com/pheix/raku-trove/blob/main/x/trove-configs/tests.conf.yml.oneliner) is included to `Trove`:
 
 ```yml
 target: Trivial one-liner test
@@ -187,9 +191,9 @@ stages:
 
 ### Gitlab
 
-Coverage percentage in Gitlab is retrieved from job's standard output: while your tests are running, you have to print actual test progress in percents to console (stdout). Output logs is parsed by runner on job finish, the matching patterns [should be set up](https://docs.gitlab.com/ee/ci/pipelines/settings.html#add-test-coverage-results-using-project-settings-removed) in `.gitlab-ci.yml` — CI/CD configuration file.
+Coverage percentage in Gitlab is retrieved from job's standard output: while your tests are running, you have to print actual test progress in percents to console (`STDOUT`). Output log is parsed by runner on job finish, the matching patterns [should be set up](https://docs.gitlab.com/ee/ci/pipelines/settings.html#add-test-coverage-results-using-project-settings-removed) in `.gitlab-ci.yml` — CI/CD configuration file.
 
-Consider trivial test configuration example from the section above, the standard output is:
+Consider trivial test configuration example from the [section above](#trivial-test-configuration-example), the standard output is:
 
 ```
 01. Running -eok(1,'true');                              [ 33% covered ]
@@ -211,7 +215,7 @@ trivial-test:
 
 #### Basics
 
-[Coveralls](https://coveralls.io/) is a web service that allows users to track the code coverage of their application over time in order to optimize the effectiveness of their unit tests. Pheix test suite includes Coveralls integration via [API](https://docs.coveralls.io/api-reference).
+[Coveralls](https://coveralls.io/) is a web service that allows users to track the code coverage of their application over time in order to optimize the effectiveness of their unit tests. Pheix test tool includes Coveralls integration via [API](https://docs.coveralls.io/api-reference).
 
 API reference is quite clear — the generic objects are `job` and `source_file`. Array of source files should be included to the job:
 

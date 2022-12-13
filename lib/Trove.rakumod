@@ -23,7 +23,7 @@ has Int  $.linesz        is default(64);
 has Str  $.gitpath       is default('.');
 has Str  $.processor     is default('jq');
 has Str  $.files_report  is default('[]');
-has Str  $.origin        is default('git@gitlab.com:pheix/raku-trove.git');
+has Str  $.origin        is default('git@github.com:pheix/raku-trove.git');
 has Str  $.dummystoken   is default(md5('Trove').list.map({$_.base(16)}).join);
 has Str  $.coveralls     is default('https://coveralls.io/api/v1/jobs');
 has Str  $.date = DateTime.now(
