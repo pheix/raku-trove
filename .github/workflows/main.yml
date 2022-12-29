@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, explore-feature ]
   pull_request:
     branches: [ main ]
 
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: rakudo-star:latest
+      image: registry.gitlab.com/pheix-pool/docker-core-perl6:latest
 
     steps:
       - uses: actions/checkout@v2
@@ -28,8 +28,11 @@ jobs:
       - name: Run full zef install
         run: zef --verbose install .
 
-      - name: Run trove app tests
+      - name: Run trove app regular test
         run: RAKULIB=./lib trove-cli -c -l --s='1' --f=`pwd`/x/trove-configs/test.conf.yaml --p=yq
+
+      - name: Run trove app explore test
+        run: RAKULIB=./lib trove-cli -c --f=`pwd`/x/trove-configs/test.conf.yaml.explore --p=yq
 
       - name: Archive test report
         uses: actions/upload-artifact@v3

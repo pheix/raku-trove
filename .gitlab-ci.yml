@@ -9,6 +9,8 @@ test:
     - zef --deps-only install .
     - prove6 -Ilib ./t/
     - zef --verbose install .
-    - RAKULIB=./lib trove-cli -c -l --s='1' --f=`pwd`/x/trove-configs/test.conf.yaml --v='0.0.1' --g=`pwd` -p=yq
+    - RAKULIB=./lib trove-cli -c -l --s='1' --f=`pwd`/x/trove-configs/test.conf.yaml --v='0.0.1' --g=`pwd` --p=yq
+    - RAKULIB=./lib trove-cli -c --f=`pwd`/x/trove-configs/test.conf.yaml.explore --p=yq
   only:
     - main
+    - explore-feature

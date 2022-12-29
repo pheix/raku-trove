@@ -1,0 +1,6 @@
+target: Trove dynamic tests
+explore:
+  base: ./t
+  pattern: (<[013]>+).(t|rakutest)
+  interpreter: raku
+  recursive: 1
