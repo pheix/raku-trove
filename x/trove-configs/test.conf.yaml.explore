@@ -4,3 +4,12 @@ explore:
   pattern: (<[013]>+).(t|rakutest)
   interpreter: raku
   recursive: 1
+stages:
+  - test: raku ./t/02.t
+    substages:
+      - test: ls -la .
+      - test: ls -la /etc
+    environment:
+      - 'export TROVE_ENV_VAR=magic-trove-env-value'
+    cleanup:
+      - 'unset TROVE_ENV_VAR'

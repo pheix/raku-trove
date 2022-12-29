@@ -4,29 +4,31 @@ use JSON::Fast;
 use YAMLish;
 
 method process(Str :$path!, Bool :$yaml = False, Str :$interpreter = 'raku') returns Hash {
-    my $config = {};
+    return {} unless $path && $path.IO.f;
 
-    return $config unless $path && $path.IO.f;
+    my $config = $yaml ?? load-yaml($path.IO.slurp) !! from-json($path.IO.slurp);
 
-    $config = $yaml ?? load-yaml($path.IO.slurp) !! from-json($path.IO.slurp);
+    if $config<explore> && $config<explore>.keys {
+        my @matched;
+        my @recursive;
 
-    return $config unless $config<explore> && $config<explore>.keys;
+        if $config<explore><base>.IO ~~ :d {
+            @recursive = $config<explore><base>.IO;
+        }
 
-    return {} unless $config<explore><base>.IO ~~ :d;
+        while @recursive {
+            for @recursive.pop.dir -> $path {
+                @matched.push({ test => sprintf("%s %s", ($config<explore><interpreter> // $interpreter), ~$path) })
+                    if $path.f && $path ~~ /<{$config<explore><pattern>}>/;
 
-    my @matched;
-    my @recursive = $config<explore><base>.IO;
+                @recursive.push($path) if $path.d && $config<explore><recursive>;
+            }
+        }
 
-    while @recursive {
-        for @recursive.pop.dir -> $path {
-            @matched.push({ test => sprintf("%s %s", ($config<explore><interpreter> // $interpreter), ~$path) })
-                if $path.f && $path ~~ /<{$config<explore><pattern>}>/;
+        if @matched && @matched.elems {
+            $config<stages>.push(|@matched.sort.list);
+        }
+    }
 
-            @recursive.push($path) if $path.d && $config<explore><recursive>;
-        }
-    }
-
-    return {} unless @matched && @matched.elems;
-
-    return { stages => @matched.sort.list };
+    return $config;
 }
