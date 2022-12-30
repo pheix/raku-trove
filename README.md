@@ -23,9 +23,10 @@ Generally `Trove` is based on idea to create the wrapper over the unit tests in 
     * [First stage logging policy](#first-stage-logging-policy)
     * [Origin repository](#origin-repository)
 2. Test configuration files — JSON & YAML
-    * Configuration sections
-        * [Test](#test)
+    * Configuration file sections
+        * [Explore](#explore)
         * [Stage and substage](#stage-and-substage)
+        * [Mix it up!](#mix-it-up)
    * [Trivial test configuration example](#trivial-test-configuration-example)
    * [Pheix test suite configuration files](#pheix-test-suite-configuration-files)
 3. Test coverage management
@@ -113,10 +114,29 @@ By default origin repository is set up to `git@github.com:pheix/raku-trove.git` 
 
 ### Configuration file sections
 
-#### Test
-
 * `target` — description of test target;
-* `stages` — list of the test stages;
+* `explore` — explore file system and build test plan with stages automatically;
+* `stages` — list of the test stages.
+
+#### Explore
+
+`explore` section is used to build test plan with test stages automatically. Consider a Perl module with some tests within `./t` folder — two options for you: add every unit test as stage manually or just configure some universal stage setup under the `explore` section.
+
+```yaml
+target: Trivial one-liner test
+explore:
+  base: ./t
+  pattern: (<[0..9]>+)\.t
+  interpreter: perl
+  recursive: 1
+```
+
+* `base` — relative or absolute base path where `Trove` will find unit test;
+* `pattern` — Raku regular expression that will be used for matching;
+* `interpreter` — default interpreter to run the unit tests;
+* `recursive` — try to traverse sub folders recursively.
+
+By default `interpreter` is `raku`, and `recursive` is disabled.
 
 #### Stage and substage
 
@@ -126,9 +146,26 @@ By default origin repository is set up to `git@github.com:pheix/raku-trove.git` 
 * `cleanup` — command to clean up environmental variables for the stage, the same restrictions are actual here;
 * `substages` — list of the test substages;
 
+#### Mix it up!
+
+You can mix `explore` and `stages` sections to flexibly cover some edge test cases like:
+
+```yaml
+target: Trivial one-liner test
+explore:
+  base: ./t
+  pattern: (0 <[0..9]> ** 1..1)\.t
+stages:
+  - test: 'raku ./t/11.t $INPUT'
+    args:
+      - INPUT
+```
+
+In this sample `Trove` will automatically add stages for `./t/00.t` ... `./t/09.t` unit tests and will run one manually added stage with additional input argument from environmental variable for `./t/11.t` unit test.
+
 ### Trivial test configuration example
 
-Trivial multi-interpreter one-liner test [configuration file](https://github.com/pheix/raku-trove/blob/main/x/trove-configs/tests.conf.yml.oneliner) is included to `Trove`:
+Trivial multi-interpreter one-liner test [configuration file](https://github.com/pheix/raku-trove/blob/main/x/trove-configs/test.conf.yaml.explorer) is included to `Trove`:
 
 ```yml
 target: Trivial one-liner test
@@ -142,16 +179,20 @@ stages:
 
 Test command to be executed:
 
-    CONSTANT=2 && trove-cli --f=/home/pheix/pool/core-perl6/run-tests.conf.yml.oneliner --p=yq -c
+    CONSTANT=2 && trove-cli --f=/home/pheix/git/raku-trove/x/trove-configs/test.conf.yaml.explorer --p=yq -c
 
 ### Pheix test suite configuration files
 
-Pheix test suite configuration files have a full set of features we talked above: `stages`, `subtages`, environmental variables export, setup and clean up. These files could be used as basic examples to create test configuration for yet another module or application, no matter — Raku, Perl or something else.
+Pheix test suite configuration files have a full set of features we talked above: `explore`, `stages`, `subtages`, environmental variables export, setup and clean up. These files could be used as basic examples to create test configuration for yet another module or application, no matter — Raku, Perl or something else.
 
 Sample [snippet](https://gitlab.com/pheix-pool/core-perl6/-/blob/develop/run-tests.conf.yml) from `run-tests.conf.yml`:
 
 ```yaml
 target: Pheix test suite
+explore:
+  base: ./t
+  pattern: (<[23]> ** 1..1 <[0..9]> ** 1..1)|(<[01]> ** 1..1 <[234569]> ** 1..1)|('07'|'08'|'10')<[a..z-]>+\.t
+  interpreter: raku
 stages:
   - test: 'raku $WWW/user.raku --mode=test'
     args:
@@ -184,7 +225,6 @@ stages:
         cleanup:
           - unset HTTP_REFERER
   ...
-  - test: raku ./t/29-deploy-smart-contract.t
 ```
 
 ## Test coverage management
@@ -325,7 +365,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Perform test with Pheix test suite
         run: |
-          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && chmod a+x /usr/local/bin/yq
           zef install Trove
           ln -s `pwd` /tmp/Acme-Insult-Lala
           cd /tmp/Acme-Insult-Lala && RAKULIB=lib trove-cli --f=/tmp/Acme-Insult-Lala/.run-tests.conf.yml --p=yq -l -c
@@ -334,11 +373,10 @@ jobs:
 
 CI/CD magic happens at `run` instruction, let's explain it line by line:
 
-1. `wget ...` — manual `yq` binary installation;
-2. `zef install Trove` — install `Trove` test tool;
-3. `ln -s ...` — creating the module path consistent with `.run-tests.conf.yml`;
-4. `cd /tmp/Acme-Insult-Lala && ...` — run the tests;
-5. `cat ...` — print test log.
+1. `zef install Trove` — install `Trove` test tool;
+2. `ln -s ...` — creating the module path consistent with `.run-tests.conf.yml`;
+3. `cd /tmp/Acme-Insult-Lala && ...` — run the tests;
+4. `cat ...` — print test log.
 
 Check the job: https://github.com/pheix/Acme-Insult-Lala/actions/runs/3621090976/jobs/6104091041
 
@@ -353,7 +391,6 @@ image: rakudo-star:latest
 
 before_script:
   - apt update && apt -y install libspiffy-perl
-  - wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && chmod a+x /usr/local/bin/yq
   - zef install Trove
   - ln -s `pwd` /tmp/Acme-perl5
 test:
