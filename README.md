@@ -27,15 +27,16 @@ Generally `Trove` is based on idea to create the wrapper over the unit tests in 
         * [Explore](#explore)
         * [Stage and substage](#stage-and-substage)
         * [Mix it up!](#mix-it-up)
-   * [Trivial test configuration example](#trivial-test-configuration-example)
-   * [Pheix test suite configuration files](#pheix-test-suite-configuration-files)
+    * [Trivial test configuration example](#trivial-test-configuration-example)
+    * [Pheix test suite configuration files](#pheix-test-suite-configuration-files)
 3. Test coverage management
-   * [Gitlab](#gitlab)
-   * [Coveralls](#coveralls)
+    * [Gitlab](#gitlab)
+    * [Coveralls](#coveralls)
+        * [Setup automatic coverage upload](#setup-automatic-coverage-upload)
 4. [Log test session](#log-test-session)
 5. Integration with CI/CD environments
-   * [github.com](#githubcom)
-   * [gitlab.com](#gitlabcom)
+    * [github.com](#githubcom)
+    * [gitlab.com](#gitlabcom)
 
 ### Command line arguments
 
@@ -255,7 +256,7 @@ trivial-test:
 
 #### Basics
 
-[Coveralls](https://coveralls.io/) is a web service that allows users to track the code coverage of their application over time in order to optimize the effectiveness of their unit tests. Pheix test tool includes Coveralls integration via [API](https://docs.coveralls.io/api-reference).
+[Coveralls](https://coveralls.io/) is a web service that allows users to track the code coverage of their application over time in order to optimize the effectiveness of their unit tests. `Trove` test tool includes Coveralls integration via [API](https://docs.coveralls.io/api-reference).
 
 API reference is quite clear — the generic objects are `job` and `source_file`. Array of source files should be included to the job:
 
@@ -282,8 +283,6 @@ In example above we covered `foo.raku` and `bar.raku` by our tests. File `foo.ra
 
 #### Test suite integration
 
-Secret token is used to request Coveralls via API. Since the Gitlab runner is used for testing, secret token is stored as [protected and masked](https://docs.gitlab.com/ee/ci/variables/#add-a-cicd-variable-to-a-project) variable.
-
 We assume full coverage for some software part if its unit test is passed. Obviously this part is presented by its unit tests and `source_files` section in Coveralls request looks like:
 
 ```javascript
@@ -305,7 +304,24 @@ We assume full coverage for some software part if its unit test is passed. Obvio
 
 We consider no lines to be covered, so it's enough to set `[ 1 ]` to `coverage` member.
 
-Besides `source_files` member we have to set up a `git` [member](https://docs.coveralls.io/api-reference#arguments) as well. It's pointed as optional, but your build reports on Coveralls side will look anonymous without git details (commit, branch, message, etc...).
+Besides `source_files` member we have to set up a `git` [member](https://docs.coveralls.io/api-reference#arguments) as well. It's pointed as optional, but your build reports on Coveralls side will look anonymous without git details (commit, branch, message and others).
+
+#### Setup automatic coverage upload
+
+You have to set up your test environment to send coverage to Coveralls service automatically. Initially `Trove` was a simple bash script targeted to GitLab and relied on the next environmental variables:
+
+* `CI_JOB_ID` - [predefined](https://docs.gitlab.com/ee/ci/variables/predefined_variables.html) GitLab CI job identifier, actually `CI_JOB_ID` can be any integer value you prefer — just `date +%s` or something dummy like `0`;
+* `COVERALLSTOKEN` - Coveralls secret [repository token](https://docs.coveralls.io/api-introduction).
+
+Sample `Trove` run with the subsequent test coverage upload to Coveralls:
+
+```bash
+CI_JOB_ID=`date +%s` COVERALLSTOKEN=<coveralls-secret-repo-token> RAKULIB=./lib trove-cli -c --f=`pwd`/x/trove-configs/test.conf.yaml.explore --p=yq
+```
+
+If you are familiar with GitLab, you can check [Pheix pipelines](https://gitlab.com/pheix-pool/core-perl6/-/pipelines). `Trove` is used there as a primary test tool since the late November 2022. GitLab sets up `CI_JOB_ID` automatically and `COVERALLSTOKEN` is configured manually with CI/CD [protected variables](https://docs.gitlab.com/ee/ci/variables/#add-a-cicd-variable-to-a-project). So, usage with GitLab is quite transparent/friendly:
+
+![Gitlab CI/CD protected variables Pheix setup](https://user-images.githubusercontent.com/6272762/210155017-1914d50d-f46b-49ac-8334-f8e749c23faa.png)
 
 ## Log test session
 
