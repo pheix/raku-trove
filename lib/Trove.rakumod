@@ -113,7 +113,8 @@ method check_output(
     Bool :$exit = True,
     Bool :$issubstage = False
 ) returns Bool {
-    $!coverage     = $!iterator * 100 / $!stages;
+    $!coverage = $!stages > 0 ?? $!iterator * 100 / $!stages !! 0.0;
+
     my $percentage = sprintf("%d%% covered", $!coverage);
 
     my $res = self.colored($percentage, 'green');
@@ -121,7 +122,7 @@ method check_output(
     $res = self.colored('OK', 'green')    if $issubstage;
     $res = self.colored('WARN', 'yellow') if $output ~~ m:i/^$/;
     $res = self.colored('SKIP', 'red')    if $output ~~ m:i/'# skip'/;
-    $res = self.colored('FAIL', 'red')    if $output ~~ /'not ok'/;
+    $res = self.colored('FAIL', 'red')    if $output ~~ /'not ok'/ && $output !~~ m:i/'# todo'/;
 
     self.write_to_log(:data(sprintf("----------- STAGE no.%d -----------\n%s\n", $stageindex, $output)))
         if ($!logfirststage && $stageindex == 1) || $stageindex > 1;
@@ -131,7 +132,7 @@ method check_output(
             sprintf("Testing %s", self.colored($script, 'yellow')), $res)))
                 if !$issubstage;
 
-    if $output ~~ /'not ok'/ {
+    if $output ~~ /'not ok'/ && $output !~~ m:i/'# todo'/ {
         self.stage_env(:mode(cleanup), :stage($stage));
         return self.failure_exit(:stageindex($stageindex), :exit($exit));
     }
