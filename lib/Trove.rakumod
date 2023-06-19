@@ -12,6 +12,7 @@ has Str  $.currver;
 has      $.skippedstages;
 has      @.coveragestats;
 
+has Bool $.skiplogging   is default(False);
 has Bool $.silent        is default(False);
 has Bool $.test          is default(False);
 has Bool $.colorize      is default(False);
@@ -59,7 +60,7 @@ method run_command(Str :$command!, Int :$stageindex = -1, Bool :$exit = True) re
 
     return Trove::Coveralls.new.run_command(
         :command($command),
-        :callback({self.failure_exit(:stageindex($stageindex), :exit($exit))})
+        :callback(sub _callback(:$output){self.failure_exit(:$stageindex, :$exit, :$output)})
     );
 }
 
@@ -253,7 +254,10 @@ method process_stages(
     return True;
 }
 
-method failure_exit(Int :$stageindex!, Bool :$exit = True) returns Bool {
+method failure_exit(Int :$stageindex!, Bool :$exit = True, Str :$output) returns Bool {
+    self.write_to_log(:data(sprintf("----------- STAGE no.%d -----------\n%s\n", $stageindex, $output)))
+        if ($!logfirststage && $stageindex == 1) || $stageindex > 1;
+
     self.debugmsg(:m(sprintf("[ %s ]", self.colored(sprintf("error at stage %d", $stageindex), 'red'))));
 
     %*ENV<PHEIXTESTENGINE>:delete;
@@ -316,6 +320,8 @@ method debugmsg(Str :$m!, Bool :$nl = True) {
 }
 
 method write_to_log(Str :$data!) returns Bool {
+    return False if $!skiplogging;
+
     return False unless $data ne q{};
 
     my $fh = $!testlog.IO.f ?? open($!testlog, :a) !! open($!testlog, :w);

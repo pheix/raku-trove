@@ -97,7 +97,7 @@ method run_command(Str :$command!, Code :$callback) returns Str {
     my $proc = run @run, :out, :env(%*ENV);
 
     if $proc.exitcode {
-        $callback() if $callback;
+        $callback(:output($proc.out.slurp: :close)) if $callback;
 
         X::AdHoc.new(:payload(sprintf("command <%s> exit code %d", $command, $proc.exitcode))).throw;
     }
