@@ -12,6 +12,7 @@ has Str  $.currver;
 has      $.skippedstages;
 has      @.coveragestats;
 
+has Bool $.dumpcoverq    is default(False);
 has Bool $.skiplogging   is default(False);
 has Bool $.silent        is default(False);
 has Bool $.test          is default(False);
@@ -300,6 +301,7 @@ method coveralls(List :$stages!) returns Bool {
 
     my $ret = Trove::Coveralls
         .new(
+            :dump($!dumpcoverq),
             :gitpath($!gitpath),
             :token($!test ?? $!dummystoken !! %*ENV<COVERALLSTOKEN>),
             :endpoint($!coveralls),

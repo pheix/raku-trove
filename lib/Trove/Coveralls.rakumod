@@ -6,12 +6,16 @@ use HTTP::Request::FormData;
 use JSON::Fast;
 use Test;
 
+has Bool $.dump   = False;
 has Bool $.silent = False;
 has Bool $.test   = False;
 has Str  $.gitpath;
 has Str  $.endpoint;
 has Str  $.token;
 has Str  $.origin;
+has Str  $.date = DateTime.now(
+    formatter => { sprintf "%d-%02d-%02d_%02d-%02d-%02d",
+        .year, .month, .day, .hour, .minute, .second }).Str;
 
 method send(List :$files!) returns Int {
     return 1 unless $!token && $!endpoint;
@@ -52,7 +56,11 @@ method send(List :$files!) returns Int {
 
     my $coveralls_json = to-json($coverals);
 
-    # self.msg(:m($coveralls_json));
+    if $!dump {
+        # self.msg(:m($coveralls_json));
+
+        sprintf("coveralls-request-%s.json", $!date).IO.spurt($coveralls_json);
+    }
 
     my $fd = HTTP::Request::FormData.new;
 

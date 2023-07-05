@@ -12,7 +12,9 @@ sub MAIN (
     Proc :$p = (jq),
     Str  :$f,
     Bool :$l = False,
-    Str  :$o
+    Str  :$o,
+    Bool :$q = False,
+    Bool :$d = False,
 )
 {
     my Str $gitver;
@@ -27,12 +29,14 @@ sub MAIN (
     }
 
     my %inits =
-        processor => ~$p,
-        currver   => $v,
-        gitver    => $gitver,
-        gitpath   => $g,
-        colorize  => $c,
-        origin    => $o,
+        dumpcoverq => $d,
+        silent     => $q,
+        processor  => ~$p,
+        currver    => $v,
+        gitver     => $gitver,
+        gitpath    => $g,
+        colorize   => $c,
+        origin     => $o,
         logfirststage => $l,
         skippedstages => $s && $s ~~ /^ <[\d,\s]>+ $/ ?? $s.split(/\s*\,\s*/, :skip-empty) !! List.new,
         $f && $f.IO.f ??
