@@ -1,4 +1,5 @@
 target: Trove test suite
+staticlines: 10
 stages:
   - test: raku ./t/01.t
   - test: raku ./t/02.t

@@ -101,7 +101,7 @@ method process(Bool :$exit = True) returns Bool {
     (1..$!stages).map({ @!coveragestats[$_ - 1] = 0; });
 
     self.process_stages(:stages($testconfig<stages>), :exit($exit));
-    self.coveralls(:stages($testconfig<stages>));
+    self.coveralls(:stages($testconfig<stages>), :staticlines($testconfig<staticlines> // 1));
     # @!coveragestats.gist.say;
 
     return True;
@@ -268,7 +268,7 @@ method failure_exit(Int :$stageindex!, Bool :$exit = True, Str :$output) returns
     return False;
 }
 
-method coveralls(List :$stages!) returns Bool {
+method coveralls(List :$stages!, Int :$staticlines!) returns Bool {
     if !%*ENV<CI_JOB_ID> {
         self.debugmsg(:m(sprintf("Skip send report to %s: CI/CD identifier is missed", self.colored('coveralls.io', 'yellow'))));
 
@@ -296,7 +296,7 @@ method coveralls(List :$stages!) returns Bool {
 
         my $coverage = @!coveragestats[$index];
 
-        @files_report.push({ name => $script, source_digest => $digest, coverage => [$coverage] });
+        @files_report.push({ name => $script, source_digest => $digest, coverage => [1..($staticlines-1)].map({ Str }).Array.push($coverage)});
     }
 
     my $ret = Trove::Coveralls
