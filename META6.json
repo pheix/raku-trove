@@ -2,7 +2,7 @@
     "perl"        : "6.d",
     "name"        : "Trove",
     "authors"     : [ "Konstantin Narkhov" ],
-    "version"     : "0.0.38",
+    "version"     : "0.0.39",
     "description" : "Yet another test harness",
     "depends"     : [
         "Test",

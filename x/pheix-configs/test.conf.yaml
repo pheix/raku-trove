@@ -1,4 +1,5 @@
 target: Pheix test suite
+staticlines: 3
 stages:
   - test: 'raku $WWW/user.raku --mode=test'
     args:

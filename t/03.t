@@ -22,7 +22,7 @@ subtest {
 
     my $r = Trove
         .new(:configfile($cfn), :test(True), :coveragestats((0..30)), :silent($silent))
-        .coveralls(:stages($c<stages>)),
+        .coveralls(:stages($c<stages>), :staticlines($c<staticlines>)),
 
     nok $r, 'coveralls wrapper';
 
