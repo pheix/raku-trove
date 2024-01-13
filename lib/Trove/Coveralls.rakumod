@@ -17,6 +17,8 @@ has Str  $.date = DateTime.now(
     formatter => { sprintf "%d-%02d-%02d_%02d-%02d-%02d",
         .year, .month, .day, .hour, .minute, .second }).Str;
 
+has $.ua = HTTP::UserAgent.new;
+
 method send(List :$files!) returns Int {
     return 1 unless $!token && $!endpoint;
 
@@ -75,11 +77,11 @@ method send(List :$files!) returns Int {
     );
 
     try {
-        $response = HTTP::UserAgent.new.request($req);
+        $response = $!ua.request($req);
  
         CATCH {
             default {
-                self.msg(:m(sprintf("coverall endpoint <%s> request exception <%s>: %s", $!endpoint, .^name, .Str)));
+                self.msg(:m(sprintf("coveralls endpoint <%s> request exception <%s>: %s", $!endpoint, .^name, .Str)));
             }
         }
     }
@@ -90,7 +92,19 @@ method send(List :$files!) returns Int {
         self.msg(:m(from-json($response.content)<url>));
     }
     else {
-        self.msg(:m(to-json(from-json($response.content), :pretty)));
+        my $r = $response.content;
+
+        try {
+            $r = to-json(from-json($r), :pretty);
+
+            CATCH {
+                default {
+                    self.msg(:m(sprintf("parse response json exception <%s>: %s", .^name, .message)));
+                }
+            }
+        }
+
+        self.msg(:m($r));
 
         return 4;
     }

@@ -1,13 +1,16 @@
 use v6.d;
 use Test;
+use Test::Mock;
 
+use HTTP::UserAgent;
+use HTTP::Response;
 use Trove;
 use Trove::Coveralls;
 
 my $silent = (%*ENV<TROVEDEBUG>.defined && %*ENV<TROVEDEBUG> == 1) ?? False !! True;
 my @env    = <CI_JOB_ID COVERALLSENDPOINT COVERALLSTOKEN>;
 
-plan 3;
+plan 4;
 
 use-ok 'Trove::Coveralls', 'Trove::Coveralls is used ok';
 
@@ -49,6 +52,39 @@ not ok 14 - save signing log # TODO possible non-signer mode
      nok $trv.check_output(:output($fail), :script(~$*PROGRAM), :stageindex(1), :stage({}), :exit(False)), 'true failure';
      ok $trv.check_output(:output($fail_todo), :script(~$*PROGRAM), :stageindex(1), :stage({}), :exit(False)), 'true failure';
 }, 'check output';
+
+subtest {
+    plan 1;
+
+    set_env;
+
+    my $response = mocked(
+        HTTP::Response,
+        returning => {
+            is-success => False,
+            content => 'internal server error',
+        });
+
+    my $ua = mocked(
+        HTTP::UserAgent,
+        returning => {
+            request => $response
+        });
+
+    my $c = Trove::Coveralls.new(
+        :test(True),
+        :silent($silent),
+        :token(%*ENV<COVERALLSTOKEN>),
+        :endpoint(%*ENV<COVERALLSENDPOINT>),
+        :$ua
+    );
+
+    my $r = $c.send(:files([{file => '1.raku', coverage => 100}]));
+
+    is $r, 4, 'parse response json exception';
+
+    unset_env;
+}, 'check Coveralls send';
 
 done-testing;
 
