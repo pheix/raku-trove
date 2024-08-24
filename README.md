@@ -2,7 +2,7 @@
 
 ## Concept
 
-Yet another [test harness written in Raku](https://github.com/pheix/raku-trove) language and inspired by `bash` driven test tool built for [Pheix](https://gitlab.com/pheix-pool/core-perl6) content management system.
+Yet another [test harness written in Raku](https://github.com/pheix/raku-trove) language and inspired by `bash` driven test tool built for [Pheix](https://gitlab.com/pheix/dcms-raku) content management system.
 
 Generally `Trove` is based on idea to create the wrapper over the unit tests in `t` folder. But with out-of-the-box Gitlab or Github CI/CD integration, extended logging and test-dependable options.
 
@@ -186,7 +186,7 @@ Test command to be executed:
 
 Pheix test suite configuration files have a full set of features we talked above: `explore`, `stages`, `subtages`, environmental variables export, setup and clean up. These files could be used as basic examples to create test configuration for yet another module or application, no matter — Raku, Perl or something else.
 
-Sample [snippet](https://gitlab.com/pheix-pool/core-perl6/-/blob/develop/run-tests.conf.yml) from `run-tests.conf.yml`:
+Sample [snippet](https://gitlab.com/pheix/dcms-raku/-/blob/develop/run-tests.conf.yml) from `run-tests.conf.yml`:
 
 ```yaml
 target: Pheix test suite
@@ -319,7 +319,7 @@ Sample `Trove` run with the subsequent test coverage upload to Coveralls:
 CI_JOB_ID=`date +%s` COVERALLSTOKEN=<coveralls-secret-repo-token> RAKULIB=./lib trove-cli -c --f=`pwd`/x/trove-configs/test.conf.yaml.explore --p=yq
 ```
 
-If you are familiar with GitLab, you can check [Pheix pipelines](https://gitlab.com/pheix-pool/core-perl6/-/pipelines). `Trove` is used there as a primary test tool since the late November 2022. GitLab sets up `CI_JOB_ID` automatically and `COVERALLSTOKEN` is configured manually with CI/CD [protected variables](https://docs.gitlab.com/ee/ci/variables/#add-a-cicd-variable-to-a-project). So, usage with GitLab is quite transparent/friendly:
+If you are familiar with GitLab, you can check [Pheix pipelines](https://gitlab.com/pheix/dcms-raku/-/pipelines). `Trove` is used there as a primary test tool since the late November 2022. GitLab sets up `CI_JOB_ID` automatically and `COVERALLSTOKEN` is configured manually with CI/CD [protected variables](https://docs.gitlab.com/ee/ci/variables/#add-a-cicd-variable-to-a-project). So, usage with GitLab is quite transparent/friendly:
 
 ![Gitlab CI/CD protected variables Pheix setup](https://user-images.githubusercontent.com/6272762/210155017-1914d50d-f46b-49ac-8334-f8e749c23faa.png)
 

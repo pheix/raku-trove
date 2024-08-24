@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: registry.gitlab.com/pheix-pool/docker-core-perl6:latest
+      image: registry.gitlab.com/pheix-docker/rakudo-star:latest
 
     steps:
       - uses: actions/checkout@v2
